@@ -208,7 +208,6 @@ export default function AttendanceView() {
     setAttendanceMap(map)
   }
 
-  // Calculate stats for report
   const statusCounts = existingAttendance.reduce((acc, a) => {
     acc[a.status] = (acc[a.status] || 0) + 1
     return acc
@@ -220,7 +219,6 @@ export default function AttendanceView() {
     color: STATUS_COLORS_MAP[status] || '#999',
   }))
 
-  // Attendance rate by class for admin report
   const [classStats, setClassStats] = useState<Array<{ name: string; hadir: number; izin: number; sakit: number; alpha: number; total: number; rate: number }>>([])
 
   const fetchClassStats = useCallback(async () => {
@@ -287,7 +285,6 @@ export default function AttendanceView() {
         )}
       </div>
 
-      {/* Take Attendance Tab */}
       {tab === 'take' && (
         <div className="space-y-4">
           <Card>
@@ -330,7 +327,6 @@ export default function AttendanceView() {
 
           {selectedClass && (
             <>
-              {/* Quick Actions */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-medium">Set Semua:</span>
                 {Object.entries(statusConfig).map(([key, cfg]) => (
@@ -340,14 +336,12 @@ export default function AttendanceView() {
                 ))}
               </div>
 
-              {/* Student List - RESPONSIVE */}
               <Card>
                 <CardContent className="p-0">
-                  <ScrollArea className="max-h-[calc(100vh-520px)] sm:max-h-[calc(100vh-380px)]">
-                    <div className="divide-y">
+                  <ScrollArea className="max-h-[calc(100vh-380px)]">
+                    <div className="divide-y pb-32 sm:pb-0">
                       {classes.find(c => c.id === selectedClass)?.students.map((student, index) => {
                         const status = attendanceMap[student.id] || 'hadir'
-                        const sc = statusConfig[status]
                         return (
                           <div key={student.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 hover:bg-muted/50">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -378,8 +372,7 @@ export default function AttendanceView() {
                 </CardContent>
               </Card>
 
-              {/* Bottom Bar - Sticky on mobile */}
-              <div className="sticky bottom-0 z-10 bg-background border-t p-3 sm:static sm:border-0 sm:p-0 sm:bg-transparent">
+              <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur border-t p-3 sm:relative sm:z-auto sm:bg-transparent sm:backdrop-blur-none sm:border-0 sm:p-0">
                 <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 text-sm text-muted-foreground mb-3 sm:mb-2">
                   <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4 text-emerald-500" /> Hadir: {Object.values(attendanceMap).filter(s => s === 'hadir').length}</span>
                   <span className="flex items-center gap-1"><AlertCircle className="w-4 h-4 text-blue-500" /> Izin: {Object.values(attendanceMap).filter(s => s === 'izin').length}</span>
@@ -395,7 +388,6 @@ export default function AttendanceView() {
         </div>
       )}
 
-      {/* Report Tab */}
       {tab === 'report' && (
         <div className="space-y-6">
           <Card>
@@ -416,7 +408,6 @@ export default function AttendanceView() {
             </CardContent>
           </Card>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {Object.entries(statusConfig).map(([key, cfg]) => (
               <Card key={key}>
@@ -436,7 +427,6 @@ export default function AttendanceView() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Pie Chart */}
             <Card>
               <CardHeader><CardTitle className="text-lg">Distribusi Kehadiran</CardTitle></CardHeader>
               <CardContent>
@@ -455,7 +445,6 @@ export default function AttendanceView() {
               </CardContent>
             </Card>
 
-            {/* Bar Chart - Attendance Rate per Class */}
             <Card>
               <CardHeader><CardTitle className="text-lg">Tingkat Kehadiran per Kelas</CardTitle></CardHeader>
               <CardContent>
@@ -479,7 +468,6 @@ export default function AttendanceView() {
             </Card>
           </div>
 
-          {/* Class Stats Table */}
           <Card>
             <CardHeader><CardTitle className="text-lg">Statistik per Kelas</CardTitle></CardHeader>
             <CardContent>
