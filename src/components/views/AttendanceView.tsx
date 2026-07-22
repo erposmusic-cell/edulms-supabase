@@ -340,28 +340,30 @@ export default function AttendanceView() {
                 ))}
               </div>
 
-              {/* Student List */}
+              {/* Student List - RESPONSIVE */}
               <Card>
                 <CardContent className="p-0">
-                  <ScrollArea className="max-h-[calc(100vh-380px)]">
+                  <ScrollArea className="max-h-[calc(100vh-420px)] sm:max-h-[calc(100vh-380px)]">
                     <div className="divide-y">
                       {classes.find(c => c.id === selectedClass)?.students.map((student, index) => {
                         const status = attendanceMap[student.id] || 'hadir'
                         const sc = statusConfig[status]
                         return (
-                          <div key={student.id} className="flex items-center gap-3 p-3 hover:bg-muted/50">
-                            <span className="w-8 text-center text-sm text-muted-foreground">{index + 1}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm">{student.user.name}</p>
-                              <p className="text-xs text-muted-foreground">NIS: {student.nis}</p>
+                          <div key={student.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 hover:bg-muted/50">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <span className="w-8 text-center text-sm text-muted-foreground">{index + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm">{student.user.name}</p>
+                                <p className="text-xs text-muted-foreground">NIS: {student.nis}</p>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 pl-11 sm:pl-0">
                               {Object.entries(statusConfig).map(([key, cfg]) => (
                                 <Button
                                   key={key}
                                   variant={status === key ? 'default' : 'outline'}
                                   size="sm"
-                                  className={`h-8 text-xs ${status === key ? cfg.bgColor + ' ' + cfg.color : ''}`}
+                                  className={`h-7 text-[11px] px-2 sm:h-8 sm:text-xs sm:px-3 ${status === key ? cfg.bgColor + ' ' + cfg.color : ''}`}
                                   onClick={() => setAttendanceMap(m => ({ ...m, [student.id]: key }))}
                                 >
                                   {cfg.label}
@@ -376,14 +378,15 @@ export default function AttendanceView() {
                 </CardContent>
               </Card>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              {/* Bottom Actions - RESPONSIVE */}
+              <div className="flex flex-col gap-3 pt-2">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4 text-emerald-500" /> Hadir: {Object.values(attendanceMap).filter(s => s === 'hadir').length}</span>
                   <span className="flex items-center gap-1"><AlertCircle className="w-4 h-4 text-blue-500" /> Izin: {Object.values(attendanceMap).filter(s => s === 'izin').length}</span>
                   <span className="flex items-center gap-1"><Clock className="w-4 h-4 text-amber-500" /> Sakit: {Object.values(attendanceMap).filter(s => s === 'sakit').length}</span>
                   <span className="flex items-center gap-1"><XCircle className="w-4 h-4 text-red-500" /> Alpha: {Object.values(attendanceMap).filter(s => s === 'alpha').length}</span>
                 </div>
-                <Button onClick={handleSaveAttendance} disabled={saving} className="gap-2">
+                <Button onClick={handleSaveAttendance} disabled={saving} className="gap-2 w-full sm:w-auto sm:self-end">
                   <Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan Absensi'}
                 </Button>
               </div>
