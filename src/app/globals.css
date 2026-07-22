@@ -151,3 +151,27 @@
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background: oklch(0.4 0.02 155);
 }
+/* Lock orientation to portrait on mobile */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  body {
+    overflow: hidden;
+  }
+  
+  body::after {
+    content: "📱 Silakan putar HP ke mode portrait";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: oklch(0.145 0.005 155);
+    color: oklch(0.985 0.002 155);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    text-align: center;
+    padding: 2rem;
+    z-index: 99999;
+  }
+}
