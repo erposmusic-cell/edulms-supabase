@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, FileText,
   ClipboardList, BarChart3, Calendar, MessageSquare, Megaphone,
-  Library, Settings, X, PenTool, Brain,
+  Library, Settings, X, PenTool, Brain, TrendingUp,
   School, MessageCircle, Send, QrCode, MapPin, ScanFace, ShieldCheck
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -38,6 +38,7 @@ const adminMenu: MenuItem[] = [
   { id: 'face-registration', label: 'Registrasi Wajah', icon: ScanFace, group: 'Kehadiran', href: '/face-registration' },
   { id: 'location-settings', label: 'Pengaturan Lokasi', icon: MapPin, group: 'Kehadiran', href: '/location-settings' },
   { id: 'leave-requests', label: 'Izin/Sakit', icon: FileText, group: 'Kehadiran', href: '/leave-requests' },
+  { id: 'attendance-reports', label: 'Laporan Absensi', icon: TrendingUp, group: 'Kehadiran', href: '/attendance-reports' },
   { id: 'announcements', label: 'Pengumuman', icon: Megaphone, group: 'Komunikasi', href: '/announcements' },
   { id: 'discussions', label: 'Forum Diskusi', icon: MessageSquare, group: 'Komunikasi', href: '/discussions' },
   { id: 'wa-schedules', label: 'Jadwal Laporan WA', icon: MessageCircle, group: 'WhatsApp', href: '/wa-schedules' },
@@ -94,6 +95,7 @@ const waliKelasMenu: MenuItem[] = [
   { id: 'grades', label: 'Penilaian', icon: BarChart3, group: 'Pembelajaran', href: '/grades' },
   { id: 'attendance', label: 'Absensi Kelas', icon: ClipboardList, group: 'Kehadiran', href: '/attendance' },
   { id: 'leaveRequests', label: 'Izin/Sakit', icon: FileText, group: 'Kehadiran', href: '/leave-requests' },
+  { id: 'attendance-reports', label: 'Laporan Absensi', icon: TrendingUp, group: 'Kehadiran', href: '/attendance-reports' },
   { id: 'announcements', label: 'Pengumuman', icon: Megaphone, group: 'Komunikasi', href: '/announcements' },
   { id: 'discussions', label: 'Forum Diskusi', icon: MessageSquare, group: 'Komunikasi', href: '/discussions' },
   { id: 'calendar', label: 'Kalender', icon: Calendar, group: 'Lainnya', href: '/calendar' },

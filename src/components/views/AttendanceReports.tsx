@@ -29,7 +29,6 @@ type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 function getDateRange(period: PeriodType, referenceDate: string): { startDate: string; endDate: string } {
   const ref = new Date(referenceDate || new Date().toISOString().split('T')[0])
-
   switch (period) {
     case 'daily': {
       const d = ref.toISOString().split('T')[0]
@@ -70,7 +69,6 @@ function getDateRange(period: PeriodType, referenceDate: string): { startDate: s
 function getPeriodLabel(period: PeriodType, startDate: string, endDate: string): string {
   const start = new Date(startDate)
   const end = new Date(endDate)
-
   switch (period) {
     case 'daily':
       return start.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -117,7 +115,7 @@ export default function AttendanceReports() {
     }
   }, [period, referenceDate, customMode])
 
-  useEffect(() => { loadData() }, [classId, startDate, endDate])
+  useEffect(() => { loadData() }, [classId, startDate, endDate, selectedAcademicYear])
 
   async function loadData() {
     if (!startDate || !endDate) return
@@ -148,19 +146,13 @@ export default function AttendanceReports() {
   }
 
   function exportPDF() {
-    if (!classId) {
-      alert('Pilih kelas terlebih dahulu untuk mengekspor PDF')
-      return
-    }
+    if (!classId) { alert('Pilih kelas terlebih dahulu untuk mengekspor PDF'); return }
     const params = new URLSearchParams({ classId, startDate, endDate })
     window.open(`/api/reports/attendance-pdf?${params}`, '_blank')
   }
 
   function exportExcel() {
-    if (!classId) {
-      alert('Pilih kelas terlebih dahulu untuk mengekspor Excel')
-      return
-    }
+    if (!classId) { alert('Pilih kelas terlebih dahulu untuk mengekspor Excel'); return }
     const params = new URLSearchParams({ classId, startDate, endDate })
     window.open(`/api/reports/attendance-excel?${params}`, '_blank')
   }
@@ -184,7 +176,6 @@ export default function AttendanceReports() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -193,95 +184,51 @@ export default function AttendanceReports() {
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="w-4 h-4 mr-1" />CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportPDF} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-            <FileText className="w-4 h-4 mr-1" />PDF
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportExcel} className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
-            <FileSpreadsheet className="w-4 h-4 mr-1" />Excel
-          </Button>
+          <Button variant="outline" size="sm" onClick={exportCSV}><Download className="w-4 h-4 mr-1" />CSV</Button>
+          <Button variant="outline" size="sm" onClick={exportPDF} className="text-red-600 hover:text-red-700 hover:bg-red-50"><FileText className="w-4 h-4 mr-1" />PDF</Button>
+          <Button variant="outline" size="sm" onClick={exportExcel} className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-1" />Excel</Button>
         </div>
       </div>
 
-      {/* Filter Card */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4">
-            {/* Period Selector */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="space-y-1 flex-1">
                 <label className="text-xs font-medium text-muted-foreground">Periode</label>
-                <div className="flex gap-1 flex-wrap">
+                <div className="flex gap-1">
                   {(['daily', 'weekly', 'monthly', 'yearly'] as PeriodType[]).map(p => (
-                    <Button
-                      key={p}
-                      variant={period === p && !customMode ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => { setPeriod(p); setCustomMode(false) }}
-                      className="text-xs"
-                    >
+                    <Button key={p} variant={period === p && !customMode ? 'default' : 'outline'} size="sm" onClick={() => { setPeriod(p); setCustomMode(false) }} className="text-xs">
                       {p === 'daily' ? 'Harian' : p === 'weekly' ? 'Mingguan' : p === 'monthly' ? 'Bulanan' : 'Tahunan'}
                     </Button>
                   ))}
-                  <Button
-                    variant={customMode ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setCustomMode(true)}
-                    className="text-xs"
-                  >
-                    Custom
-                  </Button>
+                  <Button variant={customMode ? 'default' : 'outline'} size="sm" onClick={() => setCustomMode(true)} className="text-xs">Custom</Button>
                 </div>
               </div>
-
               {!customMode && (
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">
                     {period === 'daily' ? 'Tanggal' : period === 'weekly' ? 'Pilih Hari' : period === 'monthly' ? 'Pilih Bulan' : 'Pilih Tahun'}
                   </label>
-                  <Input
-                    type={period === 'yearly' ? 'number' : 'date'}
-                    value={period === 'yearly' ? new Date(referenceDate).getFullYear() : referenceDate}
-                    onChange={e => {
-                      if (period === 'yearly') {
-                        setReferenceDate(`${e.target.value}-01-01`)
-                      } else {
-                        setReferenceDate(e.target.value)
-                      }
-                    }}
-                    min={period === 'yearly' ? 2020 : undefined}
-                    max={period === 'yearly' ? 2030 : undefined}
-                    placeholder={period === 'yearly' ? 'Tahun' : ''}
-                  />
+                  <Input type={period === 'yearly' ? 'number' : 'date'} value={period === 'yearly' ? new Date(referenceDate).getFullYear() : referenceDate}
+                    onChange={e => { if (period === 'yearly') { setReferenceDate(`${e.target.value}-01-01`) } else { setReferenceDate(e.target.value) } }}
+                    min={period === 'yearly' ? 2020 : undefined} max={period === 'yearly' ? 2030 : undefined} placeholder={period === 'yearly' ? 'Tahun' : ''} />
                 </div>
               )}
-
               {customMode && (
                 <>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">Dari</label>
-                    <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">Sampai</label>
-                    <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
-                  </div>
+                  <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Dari</label><Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
+                  <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Sampai</label><Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></div>
                 </>
               )}
             </div>
-
-            {/* Class & Academic Year */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="space-y-1 flex-1">
                 <label className="text-xs font-medium text-muted-foreground">Kelas</label>
-                <Select value={classId} onValueChange={setSelectedClass}>
+                <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger><SelectValue placeholder="Semua Kelas" /></SelectTrigger>
                   <SelectContent>
-                    {classes.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
+                    {classes.map(c => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -290,9 +237,7 @@ export default function AttendanceReports() {
                 <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
                   <SelectTrigger className="w-48"><SelectValue placeholder="Pilih" /></SelectTrigger>
                   <SelectContent>
-                    {academicYears.map(ay => (
-                      <SelectItem key={ay.id} value={ay.id}>{ay.name}</SelectItem>
-                    ))}
+                    {academicYears.map(ay => (<SelectItem key={ay.id} value={ay.id}>{ay.name}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
@@ -301,89 +246,15 @@ export default function AttendanceReports() {
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
-                <Users className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{data.summary.hadir}</p>
-                <p className="text-xs text-muted-foreground">Hadir</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{data.summary.terlambat}</p>
-                <p className="text-xs text-muted-foreground">Terlambat</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{data.summary.izin}</p>
-                <p className="text-xs text-muted-foreground">Izin</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/50 flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{data.summary.sakit}</p>
-                <p className="text-xs text-muted-foreground">Sakit</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{data.summary.alpha}</p>
-                <p className="text-xs text-muted-foreground">Alpha</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xl font-bold">{attendanceRate}%</p>
-                <p className="text-xs text-muted-foreground">Kehadiran</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center"><Users className="w-4 h-4 text-emerald-600" /></div><div><p className="text-xl font-bold">{data.summary.hadir}</p><p className="text-xs text-muted-foreground">Hadir</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center"><Clock className="w-4 h-4 text-amber-600" /></div><div><p className="text-xl font-bold">{data.summary.terlambat}</p><p className="text-xs text-muted-foreground">Terlambat</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center"><FileText className="w-4 h-4 text-blue-600" /></div><div><p className="text-xl font-bold">{data.summary.izin}</p><p className="text-xs text-muted-foreground">Izin</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/50 flex items-center justify-center"><Calendar className="w-4 h-4 text-purple-600" /></div><div><p className="text-xl font-bold">{data.summary.sakit}</p><p className="text-xs text-muted-foreground">Sakit</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center"><TrendingUp className="w-4 h-4 text-red-600" /></div><div><p className="text-xl font-bold">{data.summary.alpha}</p><p className="text-xs text-muted-foreground">Alpha</p></div></div></CardContent></Card>
+        <Card><CardContent className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="w-4 h-4 text-primary" /></div><div><p className="text-xl font-bold">{attendanceRate}%</p><p className="text-xs text-muted-foreground">Kehadiran</p></div></div></CardContent></Card>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle className="text-lg">Tren Kehadiran</CardTitle></CardHeader>
@@ -400,12 +271,9 @@ export default function AttendanceReports() {
                   <Line type="monotone" dataKey="alpha" stroke="#ef4444" name="Alpha" />
                 </LineChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-muted-foreground">Tidak ada data tren</div>
-            )}
+            ) : (<div className="flex items-center justify-center h-64 text-muted-foreground">Tidak ada data tren</div>)}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader><CardTitle className="text-lg">Perbandingan Kelas</CardTitle></CardHeader>
           <CardContent>
@@ -421,14 +289,11 @@ export default function AttendanceReports() {
                   <Bar dataKey="alpha" fill="#ef4444" name="Alpha" />
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-muted-foreground">Pilih kelas untuk melihat data</div>
-            )}
+            ) : (<div className="flex items-center justify-center h-64 text-muted-foreground">Pilih kelas untuk melihat data</div>)}
           </CardContent>
         </Card>
       </div>
 
-      {/* Data Table */}
       <Card>
         <CardHeader><CardTitle className="text-lg">Detail Kehadiran ({data.records.length} data)</CardTitle></CardHeader>
         <CardContent>
@@ -452,15 +317,8 @@ export default function AttendanceReports() {
                     <td className="py-1.5 px-2">{r.student?.class?.name || '-'}</td>
                     <td className="py-1.5 px-2">{new Date(r.date).toLocaleDateString('id-ID')}</td>
                     <td className="py-1.5 px-2 text-center">
-                      <Badge variant={
-                        r.status === 'hadir' ? 'default' :
-                        r.status === 'alpha' ? 'destructive' :
-                        'secondary'
-                      } className="text-xs">
-                        {r.status === 'hadir' ? 'Hadir' :
-                         r.status === 'terlambat' ? 'Terlambat' :
-                         r.status === 'izin' ? 'Izin' :
-                         r.status === 'sakit' ? 'Sakit' : 'Alpha'}
+                      <Badge variant={r.status === 'hadir' ? 'default' : r.status === 'alpha' ? 'destructive' : 'secondary'} className="text-xs">
+                        {r.status === 'hadir' ? 'Hadir' : r.status === 'terlambat' ? 'Terlambat' : r.status === 'izin' ? 'Izin' : r.status === 'sakit' ? 'Sakit' : 'Alpha'}
                       </Badge>
                     </td>
                     <td className="py-1.5 px-2">{r.method || '-'}</td>
@@ -468,16 +326,11 @@ export default function AttendanceReports() {
                 ))}
               </tbody>
             </table>
-            {data.records.length > 50 && (
-              <p className="text-sm text-muted-foreground text-center mt-3">
-                Menampilkan 50 dari {data.records.length} data. Download PDF/Excel untuk semua data.
-              </p>
-            )}
+            {data.records.length > 50 && (<p className="text-sm text-muted-foreground text-center mt-3">Menampilkan 50 dari {data.records.length} data. Download PDF/Excel untuk semua data.</p>)}
           </div>
         </CardContent>
       </Card>
 
-      {/* Per-Class Summary */}
       {data.byClass.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-lg">Ringkasan per Kelas</CardTitle></CardHeader>

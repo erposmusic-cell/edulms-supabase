@@ -40,6 +40,7 @@ import FaceRegistration from '@/components/views/FaceRegistration'
 import FaceAttendance from '@/components/views/FaceAttendance'
 import LocationSettings from '@/components/views/LocationSettings'
 import ExamManagement from '@/components/views/ExamManagement'
+import AttendanceReports from '@/components/views/AttendanceReports'
 
 // Map URL slug to view ID (handles normalization like leaveRequests -> leave-requests)
 const slugToViewId: Record<string, string> = {
@@ -72,6 +73,7 @@ const slugToViewId: Record<string, string> = {
   'qr-attendance': 'qr-attendance',
   'student-attendance': 'student-attendance',
   'face-attendance': 'face-attendance',
+  'attendance-reports': 'attendance-reports',
   profile: 'profile',
 }
 
@@ -83,6 +85,7 @@ const sharedViews: Record<string, React.ReactNode> = {
   library: <DigitalLibrary />,
   attendance: <AttendanceView />,
   reports: <ReportsAnalytics />,
+  'attendance-reports': <AttendanceReports />,
   profile: <ProfileAccount />,
   assignments: <AssignmentManagement />,
   quizzes: <QuizManagement />,
