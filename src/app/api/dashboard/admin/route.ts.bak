@@ -1,0 +1,102 @@
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+
+export async function GET() {
+  try {
+    const settings = await db.settings.findUnique({ where: { id: 'settings' } })
+    const academicYearId = settings?.activeAcademicYearId
+
+    // Core counts
+    const totalStudents = await db.student.count({ where: { status: 'active' } })
+    const totalTeachers = await db.teacher.count()
+    const totalClasses = await db.class.count({ where: academicYearId ? { academicYearId } : {} })
+    const totalSubjects = await db.subject.count({ where: academicYearId ? { academicYearId } : {} })
+
+    // Attendance data
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayAttendance = await db.attendance.findMany({
+      where: { date: today, ...(academicYearId ? { academicYearId } : {}) },
+    })
+    const hadir = todayAttendance.filter(a => a.status === 'hadir').length
+    const terlambat = todayAttendance.filter(a => a.status === 'terlambat').length
+    const izin = todayAttendance.filter(a => a.status === 'izin').length
+    const sakit = todayAttendance.filter(a => a.status === 'sakit').length
+    const alpha = todayAttendance.filter(a => a.status === 'alpha').length
+
+    // Weekly attendance chart
+    const weeklyAttendance: Array<{ date: string; hadir: number; terlambat: number; izin: number; sakit: number; alpha: number }> = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      d.setHours(0, 0, 0, 0)
+      const dayAtt = await db.attendance.findMany({
+        where: { date: d, ...(academicYearId ? { academicYearId } : {}) },
+      })
+      weeklyAttendance.push({
+        date: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }),
+        hadir: dayAtt.filter(a => a.status === 'hadir').length,
+        terlambat: dayAtt.filter(a => a.status === 'terlambat').length,
+        izin: dayAtt.filter(a => a.status === 'izin').length,
+        sakit: dayAtt.filter(a => a.status === 'sakit').length,
+        alpha: dayAtt.filter(a => a.status === 'alpha').length,
+      })
+    }
+
+    // Recent announcements
+    const recentAnnouncements = await db.announcement.findMany({
+      where: { isPublished: true },
+      include: { author: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    })
+
+    // Upcoming events/deadlines
+    const upcomingEvents = await db.calendarEvent.findMany({
+      where: { startDate: { gte: new Date() } },
+      orderBy: { startDate: 'asc' },
+      take: 5,
+    })
+
+    // Assignment submission stats
+    const totalAssignments = await db.assignment.count({ where: { isPublished: true } })
+    const totalSubmissions = await db.assignmentSubmission.count()
+    const pendingGrading = await db.assignmentSubmission.count({ where: { status: 'submitted' } })
+    const gradedSubmissions = await db.assignmentSubmission.count({ where: { status: 'graded' } })
+
+    // Grade distribution
+    const allGrades = await db.grade.findMany({ take: 200 })
+    const gradeRanges: Array<{ range: string; count: number }> = [
+      { range: '0-40', count: 0 },
+      { range: '41-55', count: 0 },
+      { range: '56-70', count: 0 },
+      { range: '71-85', count: 0 },
+      { range: '86-100', count: 0 },
+    ]
+    for (const g of allGrades) {
+      if (g.score <= 40) gradeRanges[0].count++
+      else if (g.score <= 55) gradeRanges[1].count++
+      else if (g.score <= 70) gradeRanges[2].count++
+      else if (g.score <= 85) gradeRanges[3].count++
+      else gradeRanges[4].count++
+    }
+
+    return NextResponse.json({
+      totalStudents,
+      totalTeachers,
+      totalClasses,
+      totalSubjects,
+      attendanceRate: totalStudents > 0 ? Math.round((hadir + terlambat) / totalStudents * 100) : 0,
+      todayStats: { hadir, terlambat, izin, sakit, alpha, total: todayAttendance.length },
+      weeklyAttendance,
+      recentAnnouncements,
+      upcomingEvents,
+      assignmentStats: { totalAssignments, totalSubmissions, pendingGrading, gradedSubmissions },
+      gradeDistribution: gradeRanges,
+    })
+  } catch (error) {
+    console.error('Admin dashboard error:', error)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+

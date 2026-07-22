@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+
+# next.js build
+.next
+out
+
+# env files (JANGAN upload password!)
+.env
+.env.local
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# debug logs
+npm-debug.log*

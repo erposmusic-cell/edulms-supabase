@@ -1,0 +1,765 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============ USER & AUTH ============
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          String   @default("student") // admin, teacher, student, parent
+  phone         String?
+  photoUrl      String?
+  darkMode      Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  student            Student?
+  teacher            Teacher?
+  parent             Parent?
+  activityLogs       ActivityLog[]
+  notifications      Notification[]
+  createdMaterials   Material[]
+  createdAssignments Assignment[]
+  createdQuizzes     Quiz[]
+  announcements      Announcement[]
+  discussionPosts    DiscussionPost[]
+  calendarEvents     CalendarEvent[]
+  chatMessages       ChatMessage[]
+  chatParticipants   ChatParticipant[]
+  bookmarks          Bookmark[]
+  notes              StudentNote[]
+  mediaLibrary       MediaItem[]
+  bookReviews        LibraryBookReview[]
+}
+
+model Teacher {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  nip           String  @unique
+  specialization String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user              User              @relation(fields: [userId], references: [id])
+  subjectAssignments SubjectAssignment[]
+  classAdvisory     ClassAdvisor[]
+}
+
+model Student {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  nis               String  @unique
+  parentPhone       String?
+  faceRegistered    Boolean @default(false)
+  faceDescriptorUrl String?
+  status            String  @default("active")
+  classId           String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user          User              @relation(fields: [userId], references: [id])
+  class         Class             @relation(fields: [classId], references: [id])
+  attendance    Attendance[]
+  leaveRequests LeaveRequest[]
+  auditLogs     StudentAuditLog[]
+  assignmentSubmissions AssignmentSubmission[]
+  quizAttempts         QuizAttempt[]
+  grades               Grade[]
+  @@index([classId])
+  @@index([status])
+}
+
+model Parent {
+  id        String @id @default(cuid())
+  userId    String @unique
+  childId   String
+  relation  String  @default("father") // father, mother, guardian
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ============ ACADEMIC STRUCTURE ============
+
+model AcademicYear {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  isActive   Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  classes       Class[]
+  attendance    Attendance[]
+  subjects      Subject[]
+  semesters     Semester[]
+}
+
+model Semester {
+  id            String   @id @default(cuid())
+  name          String   // Semester 1, Semester 2
+  academicYearId String
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  grades       Grade[]
+}
+
+model Class {
+  id             String   @id @default(cuid())
+  name           String
+  major          String?
+  grade          String?  // Kelas 10, 11, 12
+  academicYearId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  academicYear       AcademicYear      @relation(fields: [academicYearId], references: [id])
+  students           Student[]
+  subjectAssignments SubjectAssignment[]
+  classAdvisors      ClassAdvisor[]
+  locationClass      LocationClass[]
+  schedules          Schedule[]
+  announcements      Announcement[]
+  discussionForums   DiscussionForum[]
+  calendarEvents     CalendarEvent[]
+}
+
+model Subject {
+  id            String   @id @default(cuid())
+  name          String
+  code          String?  // MTK, IPA, IPS, etc.
+  description   String?
+  academicYearId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  academicYear      AcademicYear       @relation(fields: [academicYearId], references: [id])
+  subjectAssignments SubjectAssignment[]
+  materials         Material[]
+  assignments       Assignment[]
+  quizzes           Quiz[]
+  gradeCategories   GradeCategory[]
+}
+
+model SubjectAssignment {
+  id          String @id @default(cuid())
+  subjectId   String
+  teacherId   String
+  classId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject      Subject           @relation(fields: [subjectId], references: [id])
+  teacher      Teacher           @relation(fields: [teacherId], references: [id])
+  class        Class             @relation(fields: [classId], references: [id])
+  schedules    Schedule[]
+  discussionForums DiscussionForum[]
+
+  @@unique([subjectId, teacherId, classId])
+  @@index([classId])
+  @@index([teacherId])
+}
+
+model ClassAdvisor {
+  id          String @id @default(cuid())
+  teacherId   String
+  classId     String
+  academicYearId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+}
+
+model Schedule {
+  id          String   @id @default(cuid())
+  classId     String
+  subjectAssignmentId String
+  dayOfWeek   Int      // 1=Senin, 2=Selasa, etc.
+  startTime   String   // "07:00"
+  endTime     String   // "08:30"
+  room        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class             Class             @relation(fields: [classId], references: [id])
+  subjectAssignment SubjectAssignment @relation(fields: [subjectAssignmentId], references: [id])
+}
+
+// ============ LEARNING CONTENT ============
+
+model Material {
+  id          String   @id @default(cuid())
+  subjectId   String
+  teacherId   String
+  title       String
+  description String?
+  content     String?  // Rich text content
+  type        String   @default("document") // document, video, link, presentation
+  fileUrl     String?
+  videoUrl    String?
+  topic       String?  // Bab/topik
+  orderNum    Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+  teacher    User       @relation(fields: [teacherId], references: [id])
+  bookmarks  Bookmark[]
+  notes      StudentNote[]
+}
+
+model Bookmark {
+  id         String @id @default(cuid())
+  userId     String
+  materialId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+
+  @@unique([userId, materialId])
+}
+
+model StudentNote {
+  id         String @id @default(cuid())
+  userId     String
+  materialId String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  material Material @relation(fields: [materialId], references: [id])
+}
+
+// ============ ASSIGNMENTS & QUIZZES ============
+
+model Assignment {
+  id              String   @id @default(cuid())
+  subjectId       String
+  teacherId       String
+  title           String
+  description     String?
+  instructions    String?
+  dueDate         DateTime
+  allowLateSubmit Boolean  @default(false)
+  maxScore        Float    @default(100)
+  attachmentUrl   String?
+  gradeCategoryId String?
+  isPublished     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subject      Subject              @relation(fields: [subjectId], references: [id])
+  teacher      User                 @relation(fields: [teacherId], references: [id])
+  gradeCategory GradeCategory?      @relation(fields: [gradeCategoryId], references: [id])
+  submissions  AssignmentSubmission[]
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([isPublished])
+}
+
+model AssignmentSubmission {
+  id           String   @id @default(cuid())
+  assignmentId String
+  studentId    String
+  fileUrl      String?
+  textContent  String?
+  submittedAt  DateTime?
+  status       String   @default("pending") // pending, submitted, graded, late
+  score        Float?
+  feedback     String?
+  gradedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+  @@index([assignmentId, status])
+  @@index([studentId])
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  subjectId   String
+  teacherId   String
+  title       String
+  description String?
+  duration    Int      @default(30) // minutes
+  maxAttempts Int      @default(1)
+  isPublished Boolean  @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  gradeCategoryId String?
+  // Exam anti-cheat settings
+  isExam        Boolean  @default(false) // true = ujian with anti-cheat
+  shuffleQuestions Boolean @default(true) // randomize question order
+  shuffleOptions  Boolean @default(true) // randomize answer options
+  showResult      String   @default("after_exam") // after_exam, after_all_done, never
+  showCorrectAnswers Boolean @default(false) // show correct answers in results
+  tabSwitchLimit  Int      @default(3) // max tab switches before auto-submit
+  passwordProtected Boolean @default(false) // require password to start
+  examPassword    String?  // password to access exam
+  autoSubmitOnCheat Boolean @default(true) // auto-submit when cheat detected
+  token           String?  // auto-generated 6-char alphanumeric token for exam entry
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject      Subject       @relation(fields: [subjectId], references: [id])
+  teacher      User          @relation(fields: [teacherId], references: [id])
+  gradeCategory GradeCategory? @relation(fields: [gradeCategoryId], references: [id])
+  questions    QuizQuestion[]
+  attempts     QuizAttempt[]
+  @@index([subjectId])
+  @@index([teacherId])
+  @@index([isPublished])
+}
+
+model QuizQuestion {
+  id          String  @id @default(cuid())
+  quizId      String
+  question    String
+  type        String  @default("multiple_choice") // multiple_choice, benar_salah, mcma, essay
+  options     String? // JSON: MC->["A","B","C","D"], B/S->{"statements":["stmt1",...]}, MCMA->{"options":["A","B","C","D","E"]}
+  correctAnswer String? // JSON: MC->"A", B/S->{"answers":[1,0,1,0,1]}, MCMA->["A","C","E"], essay->null
+  points      Float   @default(1)
+  orderNum    Int     @default(0)
+  explanation String?
+  imageUrl    String? // optional image for question
+
+  quiz    Quiz          @relation(fields: [quizId], references: [id])
+  answers QuizAnswer[]
+}
+
+model QuizAttempt {
+  id         String   @id @default(cuid())
+  quizId     String
+  studentId  String
+  score      Float?
+  status     String   @default("in_progress") // in_progress, completed, timed_out, cheat_detected
+  startedAt  DateTime @default(now())
+  completedAt DateTime?
+  timeSpent  Int?  // seconds
+  // Anti-cheat tracking
+  tabSwitches    Int      @default(0) // number of tab switches detected
+  copyAttempts   Int      @default(0) // number of copy attempts
+  pasteAttempts  Int      @default(0) // number of paste attempts
+  rightClicks    Int      @default(0) // number of right-click attempts
+  fullscreenExited Int    @default(0) // number of times exited fullscreen
+  cheatLog       String?  // JSON log of anti-cheat events
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id])
+  student Student      @relation(fields: [studentId], references: [id])
+  answers QuizAnswer[]
+  @@index([quizId, status])
+  @@index([studentId])
+}
+
+model QuizAnswer {
+  id           String @id @default(cuid())
+  attemptId    String
+  questionId   String
+  answer       String? // JSON: MC->"A", B/S->{"1":1,"2":0,"3":1,"4":0,"5":1}, MCMA->["A","C"], essay->"text"
+  isCorrect    Boolean? // null for essay (needs manual grading), for B/S partial scoring
+  pointsEarned Float  @default(0)
+
+  attempt QuizAttempt  @relation(fields: [attemptId], references: [id])
+  question QuizQuestion @relation(fields: [questionId], references: [id])
+}
+
+// ============ GRADING & REPORTS ============
+
+model GradeCategory {
+  id          String  @id @default(cuid())
+  subjectId   String
+  name        String  // UTS, UAS, Tugas, Quiz, etc.
+  weight      Float   @default(1.0) // percentage weight
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject    Subject     @relation(fields: [subjectId], references: [id])
+  assignments Assignment[]
+  quizzes     Quiz[]
+  grades      Grade[]
+}
+
+model Grade {
+  id              String   @id @default(cuid())
+  studentId       String
+  gradeCategoryId String
+  semesterId      String
+  score           Float
+  description     String?
+  date            DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student       Student       @relation(fields: [studentId], references: [id])
+  gradeCategory GradeCategory @relation(fields: [gradeCategoryId], references: [id])
+  semester      Semester      @relation(fields: [semesterId], references: [id])
+  @@index([studentId])
+  @@index([gradeCategoryId])
+}
+
+// ============ COMMUNICATION ============
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  authorId    String
+  classId     String?  // null = global announcement
+  priority    String   @default("normal") // urgent, high, normal
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author User  @relation(fields: [authorId], references: [id])
+  class  Class? @relation(fields: [classId], references: [id])
+  @@index([isPublished])
+  @@index([classId])
+}
+
+model DiscussionForum {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  classId     String
+  subjectAssignmentId String?
+  isPinned    Boolean  @default(false)
+  isLocked    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class             Class             @relation(fields: [classId], references: [id])
+  subjectAssignment SubjectAssignment? @relation(fields: [subjectAssignmentId], references: [id])
+  posts             DiscussionPost[]
+}
+
+model DiscussionPost {
+  id         String   @id @default(cuid())
+  forumId    String
+  authorId   String
+  content    String
+  parentPostId String?  // for replies
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  forum      DiscussionForum  @relation(fields: [forumId], references: [id])
+  author     User             @relation(fields: [authorId], references: [id])
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  content    String
+  chatRoomId String
+  createdAt  DateTime @default(now())
+
+  sender    User            @relation(fields: [senderId], references: [id])
+  chatRoom  ChatRoom        @relation(fields: [chatRoomId], references: [id])
+}
+
+model ChatRoom {
+  id          String   @id @default(cuid())
+  name        String?
+  type        String   @default("direct") // direct, group
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages     ChatMessage[]
+  participants ChatParticipant[]
+}
+
+model ChatParticipant {
+  id         String @id @default(cuid())
+  chatRoomId String
+  userId     String
+  joinedAt   DateTime @default(now())
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@unique([chatRoomId, userId])
+}
+
+// ============ ATTENDANCE ============
+
+model AttendanceLocation {
+  id        String   @id @default(cuid())
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locationClasses LocationClass[]
+}
+
+model LocationClass {
+  id         String @id @default(cuid())
+  locationId String
+  classId    String
+
+  location AttendanceLocation @relation(fields: [locationId], references: [id])
+  class    Class              @relation(fields: [classId], references: [id])
+
+  @@unique([locationId, classId])
+}
+
+model Attendance {
+  id             String   @id @default(cuid())
+  studentId      String
+  academicYearId String
+  date           DateTime
+  timeIn         DateTime?
+  timeOut        DateTime?
+  status         String   @default("hadir")
+  method         String?
+  latitude       Float?
+  longitude      Float?
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student      Student      @relation(fields: [studentId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  @@unique([studentId, date])
+  @@index([date])
+  @@index([studentId, date])
+  @@index([academicYearId])
+}
+
+model LeaveRequest {
+  id              String   @id @default(cuid())
+  studentId       String
+  type            String
+  reason          String
+  startDate       DateTime
+  endDate         DateTime?
+  evidenceUrl     String?
+  status          String   @default("pending")
+  approvedByWali  String?
+  approvedByAdmin String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  @@index([studentId])
+  @@index([status])
+}
+
+model QRCode {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  validFrom  DateTime
+  validUntil DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+// ============ CALENDAR ============
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  type        String   @default("event") // event, holiday, exam, deadline
+  location    String?
+  createdBy   String
+  classId     String?  // null = all classes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator User  @relation(fields: [createdBy], references: [id])
+  class   Class? @relation(fields: [classId], references: [id])
+}
+
+// ============ DIGITAL LIBRARY ============
+
+model LibraryBook {
+  id          String   @id @default(cuid())
+  title       String
+  author      String?
+  category    String?
+  description String?
+  fileUrl     String?
+  coverUrl    String?
+  isbn        String?
+  publisher   String?
+  year        Int?
+  pages       Int?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews LibraryBookReview[]
+}
+
+model LibraryBookReview {
+  id        String  @id @default(cuid())
+  bookId    String
+  userId    String
+  rating    Int     // 1-5
+  review    String?
+  createdAt DateTime @default(now())
+
+  book LibraryBook @relation(fields: [bookId], references: [id])
+  user User        @relation(fields: [userId], references: [id])
+}
+
+// ============ MEDIA & FILES ============
+
+model MediaItem {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  fileUrl     String
+  fileType    String   // image, document, video, audio
+  fileSize    Int?
+  folder      String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ============ SYSTEM ============
+
+model Settings {
+  id                        String   @id @default("settings")
+  schoolName                String   @default("Sekolah")
+  schoolLogoUrl             String?
+  activeAcademicYearId      String?
+  timeIn                    String   @default("07:00")
+  timeLate                  String   @default("07:30")
+  timeOutMin                String   @default("13:00")
+  timeOutDeadline           String   @default("16:00")
+  attendanceThreshold       Float    @default(80.0)
+  faceRecognitionThreshold  Float    @default(0.6)
+  reminderMinutes           Int      @default(30)
+  // WhatsApp Integration (waha.devlike.pro - WAHA)
+  waEnabled                 Boolean  @default(false)
+  waApiUrl                  String   @default("https://waha.devlike.pro")
+  waApiKey                  String?
+  waSession                 String   @default("default")
+  waSenderNumber            String?
+  waAutoAttendance          Boolean  @default(true)
+  waAutoGrade               Boolean  @default(true)
+  waAutoAnnouncement        Boolean  @default(true)
+  waAutoLeaveRequest        Boolean  @default(true)
+  // Email Integration
+  emailEnabled              Boolean  @default(false)
+  emailHost                 String   @default("smtp.gmail.com")
+  emailPort                 Int      @default(587)
+  emailSecure               Boolean  @default(false)
+  emailUser                 String?
+  emailPass                 String?
+  emailFromName             String   @default("EduLMS")
+  emailFromAddress          String?
+  emailAutoAttendance       Boolean  @default(true)
+  emailAutoGrade            Boolean  @default(true)
+  emailAutoAnnouncement     Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  userName  String
+  userRole  String
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model StudentAuditLog {
+  id            String   @id @default(cuid())
+  studentId     String
+  studentName   String
+  changedBy     String
+  changedByName String
+  field         String
+  oldValue      String?
+  newValue      String?
+  createdAt     DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReportSchedule {
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  sendTime    String
+  sendDay     String?
+  recipient   String
+  classFilter String?
+  status      String   @default("active")
+  template    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs ReportScheduleLog[]
+}
+
+model ReportScheduleLog {
+  id          String   @id @default(cuid())
+  scheduleId  String
+  sentAt      DateTime
+  status      String
+  totalSent   Int      @default(0)
+  totalFailed Int      @default(0)
+  details     String?
+  createdAt   DateTime @default(now())
+
+  schedule ReportSchedule @relation(fields: [scheduleId], references: [id])
+}
