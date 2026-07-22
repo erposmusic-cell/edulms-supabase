@@ -59,6 +59,7 @@ const teacherMenu: MenuItem[] = [
   { id: 'exams', label: 'Ujian Anti Nyontek', icon: ShieldCheck, group: 'Pembelajaran', href: '/exams' },
   { id: 'grades', label: 'Penilaian', icon: BarChart3, group: 'Pembelajaran', href: '/grades' },
   { id: 'attendance', label: 'Absensi Kelas', icon: ClipboardList, group: 'Kehadiran', href: '/attendance' },
+  { id: 'attendance-reports', label: 'Laporan Absensi', icon: TrendingUp, group: 'Kehadiran', href: '/attendance-reports' },
   { id: 'announcements', label: 'Pengumuman', icon: Megaphone, group: 'Komunikasi', href: '/announcements' },
   { id: 'discussions', label: 'Forum Diskusi', icon: MessageSquare, group: 'Komunikasi', href: '/discussions' },
   { id: 'calendar', label: 'Kalender', icon: Calendar, group: 'Lainnya', href: '/calendar' },
@@ -106,6 +107,7 @@ const guruBKMenu: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'Utama', href: '/dashboard' },
   { id: 'attendance', label: 'Absensi', icon: ClipboardList, group: 'Kehadiran', href: '/attendance' },
   { id: 'leaveRequests', label: 'Izin/Sakit', icon: FileText, group: 'Kehadiran', href: '/leave-requests' },
+  { id: 'attendance-reports', label: 'Laporan Absensi', icon: TrendingUp, group: 'Kehadiran', href: '/attendance-reports' },
   { id: 'grades', label: 'Penilaian', icon: BarChart3, group: 'Akademik', href: '/grades' },
   { id: 'announcements', label: 'Pengumuman', icon: Megaphone, group: 'Komunikasi', href: '/announcements' },
   { id: 'discussions', label: 'Forum Diskusi', icon: MessageSquare, group: 'Komunikasi', href: '/discussions' },
@@ -152,7 +154,6 @@ export function Sidebar() {
 
   // Determine if a menu item is active based on the current pathname
   const isActive = (item: MenuItem) => {
-    // Exact match for the href path
     const itemPath = item.href
     return pathname === itemPath || pathname === itemPath + '/'
   }
