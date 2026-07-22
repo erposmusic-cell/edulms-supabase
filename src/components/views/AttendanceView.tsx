@@ -343,7 +343,7 @@ export default function AttendanceView() {
               {/* Student List - RESPONSIVE */}
               <Card>
                 <CardContent className="p-0">
-                  <ScrollArea className="max-h-[calc(100vh-420px)] sm:max-h-[calc(100vh-380px)]">
+                  <ScrollArea className="max-h-[calc(100vh-520px)] sm:max-h-[calc(100vh-380px)]">
                     <div className="divide-y">
                       {classes.find(c => c.id === selectedClass)?.students.map((student, index) => {
                         const status = attendanceMap[student.id] || 'hadir'
@@ -378,9 +378,9 @@ export default function AttendanceView() {
                 </CardContent>
               </Card>
 
-              {/* Bottom Actions - RESPONSIVE */}
-              <div className="flex flex-col gap-3 pt-2">
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 text-sm text-muted-foreground">
+              {/* Bottom Bar - Sticky on mobile */}
+              <div className="sticky bottom-0 z-10 bg-background border-t p-3 sm:static sm:border-0 sm:p-0 sm:bg-transparent">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 text-sm text-muted-foreground mb-3 sm:mb-2">
                   <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4 text-emerald-500" /> Hadir: {Object.values(attendanceMap).filter(s => s === 'hadir').length}</span>
                   <span className="flex items-center gap-1"><AlertCircle className="w-4 h-4 text-blue-500" /> Izin: {Object.values(attendanceMap).filter(s => s === 'izin').length}</span>
                   <span className="flex items-center gap-1"><Clock className="w-4 h-4 text-amber-500" /> Sakit: {Object.values(attendanceMap).filter(s => s === 'sakit').length}</span>
